@@ -14,16 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      list_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          list_id: string
+          role: Database["public"]["Enums"]["membership_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          list_id: string
+          role?: Database["public"]["Enums"]["membership_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          list_id?: string
+          role?: Database["public"]["Enums"]["membership_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "list_memberships_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lists: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          completed: boolean
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          list_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed?: boolean
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          list_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed?: boolean
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          list_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_member: {
+        Args: { _list_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_owner: {
+        Args: { _list_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      membership_role: "owner" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +259,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      membership_role: ["owner", "member"],
+    },
   },
 } as const
