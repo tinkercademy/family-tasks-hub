@@ -10,7 +10,7 @@ import EditTaskDialog from "@/components/tasks/EditTaskDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Pencil, Trash } from "lucide-react";
 interface List { id: string; owner_id: string; title: string; created_at: string }
-interface Task { id: string; list_id: string; title: string; description: string | null; completed: boolean; due_date: string | null; created_at: string }
+interface Task { id: string; list_id: string; title: string; description: string | null; completed: boolean; due_date: string | null; created_at: string; created_by: string }
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const Index = () => {
   const [listForRename, setListForRename] = useState<List | null>(null);
   const [taskOpen, setTaskOpen] = useState(false);
   const [taskForEdit, setTaskForEdit] = useState<Task | null>(null);
-
+  const [profiles, setProfiles] = useState<Record<string, { display_name: string | null; avatar_url: string | null }>>({});
   useEffect(() => {
     document.title = "Family To‑Do Lists";
     const meta = document.querySelector('meta[name="description"]');
@@ -92,6 +92,29 @@ const Index = () => {
     };
     loadTasks();
   }, [selectedList]);
+
+  useEffect(() => {
+    const userIds = new Set<string>();
+    lists.forEach((l) => userIds.add(l.owner_id));
+    tasks.forEach((t) => t.created_by && userIds.add(t.created_by));
+    const ids = Array.from(userIds).filter((id) => !(id in profiles));
+    if (ids.length === 0) return;
+    const loadProfiles = async () => {
+      const { data, error } = await db
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', ids);
+      if (!error && data) {
+        setProfiles((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            data.map((p: any) => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }])
+          ),
+        }));
+      }
+    };
+    loadProfiles();
+  }, [lists, tasks]);
 
   const addList = async () => {
     if (!newListTitle.trim() || !userId) return;
@@ -230,6 +253,7 @@ const Index = () => {
   }
 
   const selected = lists.find((l) => l.id === selectedList) || null;
+  const nameFor = (id?: string | null) => profiles[id ?? '']?.display_name ?? 'Unknown user';
 
   return (
     <main className="min-h-screen">
@@ -258,7 +282,8 @@ const Index = () => {
                 {lists.map((l) => (
                   <li key={l.id} className={`flex items-center justify-between rounded-md p-2 ${selectedList===l.id ? 'bg-accent' : ''}`}>
                     <button className="text-left flex-1" onClick={() => setSelectedList(l.id)}>
-                      {l.title}
+                      <div className="text-sm font-medium">{l.title}</div>
+                      <div className="text-xs text-muted-foreground">by {nameFor(l.owner_id)}</div>
                     </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -286,7 +311,12 @@ const Index = () => {
         <section className="md:col-span-2">
           <Card className="border-0 shadow-none">
             <CardHeader>
-              <CardTitle>{selected ? selected.title : 'Select a list'}</CardTitle>
+              <CardTitle className="flex flex-col">
+                <span>{selected ? selected.title : 'Select a list'}</span>
+                {selected && (
+                  <span className="text-sm font-normal text-muted-foreground">by {nameFor(selected.owner_id)}</span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {selected ? (
@@ -298,9 +328,12 @@ const Index = () => {
                   <ul className="space-y-2">
                     {tasks.map((t) => (
                       <li key={t.id} className="flex items-center justify-between rounded-md p-2">
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} />
-                          <span className={t.completed ? 'line-through text-muted-foreground' : ''}>{t.title}</span>
+                        <label className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} />
+                            <span className={t.completed ? 'line-through text-muted-foreground' : ''}>{t.title}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground ml-6">by {nameFor(t.created_by)}</span>
                         </label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
