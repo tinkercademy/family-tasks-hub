@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import RenameListDialog from "@/components/lists/RenameListDialog";
+import EditTaskDialog from "@/components/tasks/EditTaskDialog";
 
 interface List { id: string; owner_id: string; title: string; created_at: string }
 interface Task { id: string; list_id: string; title: string; description: string | null; completed: boolean; created_at: string }
