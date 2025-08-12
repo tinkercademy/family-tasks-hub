@@ -70,11 +70,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
           completed: boolean
           created_at: string
+          created_by: string
           description: string | null
           due_date: string | null
           id: string
@@ -87,6 +112,7 @@ export type Database = {
           assigned_to?: string | null
           completed?: boolean
           created_at?: string
+          created_by: string
           description?: string | null
           due_date?: string | null
           id?: string
@@ -99,6 +125,7 @@ export type Database = {
           assigned_to?: string | null
           completed?: boolean
           created_at?: string
+          created_by?: string
           description?: string | null
           due_date?: string | null
           id?: string
