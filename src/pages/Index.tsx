@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import RenameListDialog from "@/components/lists/RenameListDialog";
 import EditTaskDialog from "@/components/tasks/EditTaskDialog";
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, Pencil, Trash } from "lucide-react";
 interface List { id: string; owner_id: string; title: string; created_at: string }
-interface Task { id: string; list_id: string; title: string; description: string | null; completed: boolean; created_at: string }
+interface Task { id: string; list_id: string; title: string; description: string | null; completed: boolean; due_date: string | null; created_at: string }
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,6 +24,10 @@ const Index = () => {
   const [selectedList, setSelectedList] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [listForRename, setListForRename] = useState<List | null>(null);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [taskForEdit, setTaskForEdit] = useState<Task | null>(null);
 
   useEffect(() => {
     document.title = "Family To‑Do Lists";
@@ -112,6 +117,43 @@ const Index = () => {
     }
     setLists((prev) => prev.filter((l) => l.id !== id));
     if (selectedList === id) setSelectedList(null);
+  };
+
+  const openRename = (list: List) => {
+    setListForRename(list);
+    setRenameOpen(true);
+  };
+
+  const saveRename = async (newTitle: string) => {
+    if (!listForRename) return;
+    const { error } = await db.from('lists').update({ title: newTitle }).eq('id', listForRename.id);
+    if (error) {
+      toast({ title: 'Could not rename list', description: error.message, variant: 'destructive' as any });
+      return;
+    }
+    setLists((prev) => prev.map((l) => (l.id === listForRename.id ? { ...l, title: newTitle } : l)));
+    setRenameOpen(false);
+  };
+
+  const openEditTask = (task: Task) => {
+    setTaskForEdit(task);
+    setTaskOpen(true);
+  };
+
+  const saveTaskEdit = async (updates: { title: string; description: string | null; due_date: string | null }) => {
+    if (!taskForEdit) return;
+    const { error } = await db
+      .from('tasks')
+      .update(updates)
+      .eq('id', taskForEdit.id)
+      .select()
+      .maybeSingle();
+    if (error) {
+      toast({ title: 'Could not update task', description: error.message, variant: 'destructive' as any });
+      return;
+    }
+    setTasks((prev) => prev.map((t) => (t.id === taskForEdit.id ? { ...t, ...updates } : t)));
+    setTaskOpen(false);
   };
 
   const addTask = async () => {
@@ -218,7 +260,21 @@ const Index = () => {
                     <button className="text-left flex-1" onClick={() => setSelectedList(l.id)}>
                       {l.title}
                     </button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteList(l.id)}>Delete</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label="List actions">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openRename(l)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => deleteList(l.id)}>
+                          <Trash className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </li>
                 ))}
                 {lists.length === 0 && <p className="text-sm text-muted-foreground">No lists yet. Create one above.</p>}
@@ -246,7 +302,21 @@ const Index = () => {
                           <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} />
                           <span className={t.completed ? 'line-through text-muted-foreground' : ''}>{t.title}</span>
                         </label>
-                        <Button variant="ghost" size="sm" onClick={() => deleteTask(t.id)}>Delete</Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label="Task actions">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditTask(t)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteTask(t.id)}>
+                              <Trash className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </li>
                     ))}
                     {tasks.length === 0 && <p className="text-sm text-muted-foreground">No tasks yet. Add one above.</p>}
@@ -259,6 +329,18 @@ const Index = () => {
           </Card>
         </section>
       </section>
+      <RenameListDialog
+        list={listForRename}
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        onSave={saveRename}
+      />
+      <EditTaskDialog
+        task={taskForEdit ? { id: taskForEdit.id, title: taskForEdit.title, description: taskForEdit.description, due_date: taskForEdit.due_date ?? null } : null}
+        open={taskOpen}
+        onOpenChange={setTaskOpen}
+        onSave={saveTaskEdit}
+      />
     </main>
   );
 };
