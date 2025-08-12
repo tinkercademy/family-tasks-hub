@@ -201,7 +201,7 @@ const Index = () => {
 
       <section className="container mx-auto py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         <aside className="md:col-span-1">
-          <Card>
+          <Card className="border-0 shadow-none">
             <CardHeader>
               <CardTitle>Your Lists</CardTitle>
             </CardHeader>
@@ -212,7 +212,7 @@ const Index = () => {
               </div>
               <ul className="space-y-2">
                 {lists.map((l) => (
-                  <li key={l.id} className={`flex items-center justify-between rounded-md border p-2 ${selectedList===l.id ? 'bg-accent' : ''}`}>
+                  <li key={l.id} className={`flex items-center justify-between rounded-md p-2 ${selectedList===l.id ? 'bg-accent' : ''}`}>
                     <button className="text-left flex-1" onClick={() => setSelectedList(l.id)}>
                       {l.title}
                     </button>
@@ -226,7 +226,7 @@ const Index = () => {
         </aside>
 
         <section className="md:col-span-2">
-          <Card>
+          <Card className="border-0 shadow-none">
             <CardHeader>
               <CardTitle>{selected ? selected.title : 'Select a list'}</CardTitle>
             </CardHeader>
@@ -239,7 +239,7 @@ const Index = () => {
                   </div>
                   <ul className="space-y-2">
                     {tasks.map((t) => (
-                      <li key={t.id} className="flex items-center justify-between rounded-md border p-2">
+                      <li key={t.id} className="flex items-center justify-between rounded-md p-2">
                         <label className="flex items-center gap-2">
                           <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} />
                           <span className={t.completed ? 'line-through text-muted-foreground' : ''}>{t.title}</span>
