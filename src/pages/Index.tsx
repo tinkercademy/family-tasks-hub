@@ -15,6 +15,7 @@ const Index = () => {
   const db = supabase as any;
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [lists, setLists] = useState<List[]>([]);
   const [newListTitle, setNewListTitle] = useState("");
   const [selectedList, setSelectedList] = useState<string | null>(null);
@@ -37,11 +38,13 @@ const Index = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id ?? null);
+      setUserEmail(session?.user?.email ?? null);
       if (!session) navigate("/auth", { replace: true });
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id ?? null);
+      setUserEmail(session?.user?.email ?? null);
       if (!session) navigate("/auth", { replace: true });
       else setLoading(false);
     });
@@ -189,8 +192,8 @@ const Index = () => {
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between py-4">
           <h1 className="text-xl font-semibold">Family To‑Do Lists</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate('/auth')}>Login</Button>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">{userEmail}</span>
             <Button onClick={logout}>Logout</Button>
           </div>
         </div>
